@@ -1990,6 +1990,9 @@ namespace gdjs {
       );
       if (numberPropertiesChanged || stringPropertiesChanged || sizeChanged) {
         runtimeObject.extraInitializationFromInitialInstance(newInstance);
+        if (this._runtimeGame.isInGameEdition()) {
+          gdjs.InGameEditor.applyMinimumOpacity(runtimeObject);
+        }
         somethingChanged = true;
       }
       if (somethingChanged) {

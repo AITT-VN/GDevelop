@@ -1049,6 +1049,22 @@ namespace gdjs {
 
   /** @category In-Game Editor */
   export class InGameEditor {
+    /**
+     * Like in the 2D editor, transparent instances stay partially visible so
+     * they can't be lost or misplaced.
+     */
+    static applyMinimumOpacity(object: gdjs.RuntimeObject): void {
+      const objectWithOpacity = object as gdjs.RuntimeObject &
+        Partial<gdjs.OpacityHandler>;
+      if (!objectWithOpacity.getOpacity || !objectWithOpacity.setOpacity) {
+        return;
+      }
+      const minimumOpacity = 255 / 2;
+      if (objectWithOpacity.getOpacity() < minimumOpacity) {
+        objectWithOpacity.setOpacity(minimumOpacity);
+      }
+    }
+
     private _editorId: string = '';
     private _runtimeGame: RuntimeGame;
     private _currentScene: gdjs.RuntimeScene | null = null;
@@ -3813,6 +3829,7 @@ namespace gdjs {
               );
             }
             runtimeObject.extraInitializationFromInitialInstance(instance);
+            InGameEditor.applyMinimumOpacity(runtimeObject);
           }
         });
       this._updateInstances(instances);
