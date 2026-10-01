@@ -24,7 +24,7 @@ LMS storage API.
 
 Not yet implemented: OhStem link publishing, LMS/S3 project sync, curriculum
 templates/assets, and school-computer performance validation. The CloudFront
-deployment exists; the custom hostname still needs a DNS CNAME in Mat Bao.
+deployment is available at `https://gdevelop.ohstem.vn/`.
 
 ## Build
 
@@ -55,8 +55,8 @@ The OhStem build was first deployed on 2026-10-01 to:
 - CloudFront: `https://d1kt7yo8kaxg0o.cloudfront.net/`, with response headers
   policy `61599b3a-1028-418e-9a6d-5d3fa3aaed47` and alias
   `gdevelop.ohstem.vn` using the issued `*.ohstem.vn` certificate.
-- DNS: add `gdevelop.ohstem.vn CNAME d1kt7yo8kaxg0o.cloudfront.net` in Mat
-  Bao. The alias has been verified through CloudFront, but DNS is not set yet.
+- The custom hostname `https://gdevelop.ohstem.vn/` resolves and returned HTTP
+  200 with the deployed build on 2026-10-02.
 
 The initial upload contained all 2,847 build files. CloudFront returned HTTP 200 for
 `/`, `/service-worker.js`, `/libGD.wasm`, and `/GDJS/Runtime/gd.js`; the direct
