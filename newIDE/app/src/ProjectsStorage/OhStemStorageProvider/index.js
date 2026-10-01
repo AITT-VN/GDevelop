@@ -207,7 +207,7 @@ export default ({
       if (!isValidSlot(slot)) throw new Error('Invalid slot name.');
       return { fileIdentifier: `slot:${slot}` };
     }
-    return null;
+    return { fileIdentifier: 'slot:default' };
   },
   getProjectLocation: ({ projectName }) => ({
     fileIdentifier: `copy:${crypto.randomUUID()}`,

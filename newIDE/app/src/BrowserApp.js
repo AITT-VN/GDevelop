@@ -42,8 +42,8 @@ export const create = (authentication: Authentication): React.Node => {
   if (isOhStemMode && !getLearnerId()) {
     return (
       <div style={{ padding: 24, fontFamily: 'sans-serif' }}>
-        OhStem Game Studio cần mã học sinh hợp lệ trong tham số URL
-        <code> learner=</code>.
+        Mã học viên trong tham số URL <code>learner=</code> không hợp lệ. Chỉ
+        dùng chữ, số, dấu gạch dưới hoặc dấu gạch ngang.
       </div>
     );
   }

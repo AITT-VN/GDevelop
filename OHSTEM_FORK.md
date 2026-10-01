@@ -12,11 +12,15 @@ and import, and a same-origin game preview. The OhStem build hides GDevelop
 account, store, AI, promotion, and publishing entry points and suppresses their
 startup requests. The normal GDevelop build is unchanged.
 
-IndexedDB is local to one browser profile and origin. The `learner` URL value is
-only a workspace key, not authentication or a security boundary. A student can
-enter another learner key on the same browser. The LMS must use opaque learner
-keys and avoid sharing browser profiles if this provisional storage option is
-used. Server persistence requires an authenticated LMS storage API.
+Opening the root URL without parameters creates a guest workspace in the
+browser and opens its default project. The guest key persists in localStorage,
+while projects persist in IndexedDB. LMS URLs with `learner` and `slot` still
+open their own workspaces. IndexedDB is local to one browser profile and origin.
+The `learner` URL value is only a workspace key, not authentication or a security
+boundary. A student can enter another learner key on the same browser. The LMS
+must use opaque learner keys and avoid sharing browser profiles if this
+provisional storage option is used. Server persistence requires an authenticated
+LMS storage API.
 
 Not yet implemented: OhStem link publishing, LMS/S3 project sync, curriculum
 templates/assets, and school-computer performance validation. The CloudFront
@@ -43,7 +47,7 @@ the lesson iframe before enabling either one.
 
 ## AWS deployment
 
-The build from commit `e474918` was deployed on 2026-10-01 to:
+The OhStem build was first deployed on 2026-10-01 to:
 
 - S3: `gdevelop-ohstem-vn-337643813927-ap-southeast-1` in `ap-southeast-1`;
   public access is blocked and only CloudFront distribution `E1U2JL12LENS5P`
@@ -54,7 +58,7 @@ The build from commit `e474918` was deployed on 2026-10-01 to:
 - DNS: add `gdevelop.ohstem.vn CNAME d1kt7yo8kaxg0o.cloudfront.net` in Mat
   Bao. The alias has been verified through CloudFront, but DNS is not set yet.
 
-The upload contains all 2,847 build files. CloudFront returned HTTP 200 for
+The initial upload contained all 2,847 build files. CloudFront returned HTTP 200 for
 `/`, `/service-worker.js`, `/libGD.wasm`, and `/GDJS/Runtime/gd.js`; the direct
 S3 object URL returned HTTP 403. For future deployments, upload `build/static/`
 with `Cache-Control: public,max-age=31536000,immutable`, the rest with
