@@ -38,6 +38,8 @@ npm run build:ohstem
 directory. Deploy the entire directory to the dedicated S3 bucket.
 Serve it over HTTPS for Service Worker preview and IndexedDB. The build pins
 the prebuilt `libGD.js` and WASM to the upstream commit above.
+The OhStem service worker leaves page navigations to the network, so reopening
+the editor fetches the current HTML instead of an older cached page.
 Never use the upstream `newIDE/web-app/scripts/deploy.js` for this fork: it
 publishes to upstream destinations. The CloudFront response headers policy uses
 `Content-Security-Policy: frame-ancestors 'self' https://courses.openstem.vn
