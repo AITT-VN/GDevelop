@@ -19,8 +19,8 @@ keys and avoid sharing browser profiles if this provisional storage option is
 used. Server persistence requires an authenticated LMS storage API.
 
 Not yet implemented: OhStem link publishing, LMS/S3 project sync, curriculum
-templates/assets, and school-computer performance validation. Deployment to
-`gdevelop.ohstem.vn` also needs the hosting account and DNS configuration.
+templates/assets, and school-computer performance validation. The CloudFront
+deployment exists; the custom hostname still needs a DNS CNAME in Mat Bao.
 
 ## Build
 
@@ -31,15 +31,36 @@ npm run build:ohstem
 ```
 
 `build:ohstem` places the editor and `GDJS/Runtime` in the same `build/`
-directory. Deploy the entire directory to the `gdevelop.ohstem.vn` origin.
+directory. Deploy the entire directory to the dedicated S3 bucket.
 Serve it over HTTPS for Service Worker preview and IndexedDB. The build pins
 the prebuilt `libGD.js` and WASM to the upstream commit above.
 Never use the upstream `newIDE/web-app/scripts/deploy.js` for this fork: it
-publishes to upstream destinations. Set a CloudFront response headers policy
-with `Content-Security-Policy: frame-ancestors https://courses.openstem.vn
+publishes to upstream destinations. The CloudFront response headers policy uses
+`Content-Security-Policy: frame-ancestors 'self' https://courses.openstem.vn
 http://localhost:*` (also allow the actual local test host origin if different).
 Do not set `X-Frame-Options: DENY` or `SAMEORIGIN`. Test COOP/COEP headers with
 the lesson iframe before enabling either one.
+
+## AWS deployment
+
+The build from commit `e474918` was deployed on 2026-10-01 to:
+
+- S3: `gdevelop-ohstem-vn-337643813927-ap-southeast-1` in `ap-southeast-1`;
+  public access is blocked and only CloudFront distribution `E1U2JL12LENS5P`
+  may read objects through OAC `EMSLCUHAXHQGU`.
+- CloudFront: `https://d1kt7yo8kaxg0o.cloudfront.net/`, with response headers
+  policy `61599b3a-1028-418e-9a6d-5d3fa3aaed47` and alias
+  `gdevelop.ohstem.vn` using the issued `*.ohstem.vn` certificate.
+- DNS: add `gdevelop.ohstem.vn CNAME d1kt7yo8kaxg0o.cloudfront.net` in Mat
+  Bao. The alias has been verified through CloudFront, but DNS is not set yet.
+
+The upload contains all 2,847 build files. CloudFront returned HTTP 200 for
+`/`, `/service-worker.js`, `/libGD.wasm`, and `/GDJS/Runtime/gd.js`; the direct
+S3 object URL returned HTTP 403. For future deployments, upload `build/static/`
+with `Cache-Control: public,max-age=31536000,immutable`, the rest with
+`public,max-age=3600`, and overwrite `index.html` and `service-worker.js` with
+`no-cache,no-store,must-revalidate`. Invalidate `/`, `/index.html`, and
+`/service-worker.js` after an update.
 
 ## Test host
 
