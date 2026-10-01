@@ -19,6 +19,7 @@ import Mobile from '../../../UI/CustomSvgIcons/Mobile';
 import Desktop from '../../../UI/CustomSvgIcons/Desktop';
 import HistoryIcon from '../../../UI/CustomSvgIcons/History';
 import AuthenticatedUserContext from '../../../Profile/AuthenticatedUserContext';
+import { isOhStemMode } from '../../../OhStem/Config';
 import { type FileMetadata } from '../../../ProjectsStorage';
 const electron = optionalRequire('electron');
 
@@ -57,7 +58,7 @@ export const HomePageHeader = ({
             <Line noMargin>
               {!!hasProject && (
                 <>
-                  <IconButton
+                  {!isOhStemMode && <IconButton
                     size="small"
                     id="main-toolbar-history-button"
                     onClick={onOpenVersionHistory}
@@ -65,7 +66,7 @@ export const HomePageHeader = ({
                     color="default"
                   >
                     <HistoryIcon />
-                  </IconButton>
+                  </IconButton>}
                   <SaveProjectIcon
                     id="main-toolbar-save-button"
                     onSave={onSave}
@@ -77,7 +78,7 @@ export const HomePageHeader = ({
           </Column>
           <Column>
             <LineStackLayout noMargin alignItems="center">
-              {!electron &&
+              {!isOhStemMode && !electron &&
                 !isNativeMobileApp() &&
                 (isMobile ? (
                   <IconButton
@@ -97,9 +98,9 @@ export const HomePageHeader = ({
                     leftIcon={<Desktop />}
                   />
                 ))}
-              <UserChip onOpenProfile={onOpenProfile} />
-              {profile && <NotificationChip />}
-              {isMobile ? (
+              {!isOhStemMode && <UserChip onOpenProfile={onOpenProfile} />}
+              {!isOhStemMode && profile && <NotificationChip />}
+              {isOhStemMode ? null : isMobile ? (
                 <IconButton size="small" onClick={onOpenLanguageDialog}>
                   <TranslateIcon fontSize="small" />
                 </IconButton>

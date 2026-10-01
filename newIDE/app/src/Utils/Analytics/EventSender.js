@@ -22,6 +22,7 @@ import {
 import { retryIfFailed } from '../RetryIfFailed';
 import { type NewProjectCreationSource } from '../../ProjectCreation/NewProjectSetupDialog';
 import { isServiceWorkerSupported } from '../../ServiceWorkerSetup';
+import { isOhStemMode } from '../../OhStem/Config';
 const electron = optionalRequire('electron');
 
 const isElectronApp = !!electron;
@@ -143,7 +144,7 @@ const getAppMetadata = () => ({
  * This function will retry to send the event if the analytics service is not ready.
  */
 const recordEvent = (name: string, metadata?: { [string]: any }) => {
-  if (isDev) {
+  if (isDev || isOhStemMode) {
     // Uncomment to inspect analytics in development.
     // console.log(`Should have sent analytics event "${name}"`, metadata);
     return;
@@ -183,7 +184,7 @@ const recordEvent = (name: string, metadata?: { [string]: any }) => {
  * Used once at the beginning of the app to initialize the analytics.
  */
 export const installAnalyticsEvents = () => {
-  if (isDev) {
+  if (isDev || isOhStemMode) {
     console.info('Development build - Analytics disabled');
     return;
   }
@@ -210,7 +211,7 @@ export const installAnalyticsEvents = () => {
 export const identifyUserForAnalytics = (
   authenticatedUser: AuthenticatedUser
 ) => {
-  if (isDev) {
+  if (isDev || isOhStemMode) {
     console.info('Development build - Analytics disabled');
     return;
   }
@@ -287,7 +288,7 @@ export const aliasUserForAnalyticsAfterSignUp = (
   // $FlowFixMe[value-as-type]
   firebaseUser: FirebaseUser
 ) => {
-  if (isDev) {
+  if (isDev || isOhStemMode) {
     console.info('Development build - Analytics disabled');
     return;
   }
@@ -308,7 +309,7 @@ export const aliasUserForAnalyticsAfterSignUp = (
 };
 
 export const onUserLogoutForAnalytics = () => {
-  if (isDev) {
+  if (isDev || isOhStemMode) {
     console.info('Development build - Analytics disabled');
     return;
   }

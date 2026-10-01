@@ -8,6 +8,7 @@ import {
 import CloudStorageProvider from '../CloudStorageProvider';
 import UrlStorageProvider from '../UrlStorageProvider';
 import DownloadFileStorageProvider from '../DownloadFileStorageProvider';
+import OhStemStorageProvider from '../OhStemStorageProvider';
 import { moveUrlResourcesToCloudProject } from '../CloudStorageProvider/CloudResourceMover';
 
 const moveNothing = async () => {
@@ -19,6 +20,10 @@ const moveNothing = async () => {
 const movers: {
   [string]: MoveAllProjectResourcesFunction,
 } = {
+  // OhStem snapshots all blob resources during save, after this move step.
+  [`${OhStemStorageProvider.internalName}=>${OhStemStorageProvider.internalName}`]: moveNothing,
+  [`${UrlStorageProvider.internalName}=>${OhStemStorageProvider.internalName}`]: moveNothing,
+  [`${OhStemStorageProvider.internalName}=>${DownloadFileStorageProvider.internalName}`]: moveNothing,
   // Moving to GDevelop "Cloud" storage:
 
   // From a Cloud project to another, resources need to be copied

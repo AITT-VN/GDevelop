@@ -34,6 +34,7 @@ import {
   parseLocalFilePathOrExtensionFromMetadata,
 } from '../../ResourcesList/ResourceUtils';
 import { sanitizeFilename } from '../../Utils/Filename';
+import { isOhStemMode } from '../../OhStem/Config';
 const gd: libGDevelop = global.gd;
 
 const PROJECT_JSON_FILENAME = 'game.json';
@@ -100,7 +101,13 @@ export const downloadResourcesAsBlobs = async ({
                   resourceFile
                 ),
               };
-            } else if (isBlobURL(resourceFile)) {
+            } else if (
+              isBlobURL(resourceFile) ||
+              (isOhStemMode &&
+                (resourceFile.startsWith('http://') ||
+                  resourceFile.startsWith('https://') ||
+                  resourceFile.startsWith('data:')))
+            ) {
               // Only in memory (a project not saved yet): named like when
               // uploaded to the cloud.
               const { extension } = parseLocalFilePathOrExtensionFromMetadata(
@@ -258,12 +265,16 @@ export default function DownloadFileSaveAsDialog({
     <Dialog
       title={<Trans>Download a copy</Trans>}
       actions={[
-        <FlatButton
-          key="download"
-          label={<Trans>Download GDevelop desktop version</Trans>}
-          primary={false}
-          onClick={() => Window.openExternalURL('http://gdevelop.io')}
-        />,
+        ...(!isOhStemMode
+          ? [
+              <FlatButton
+                key="download"
+                label={<Trans>Download GDevelop desktop version</Trans>}
+                primary={false}
+                onClick={() => Window.openExternalURL('http://gdevelop.io')}
+              />,
+            ]
+          : []),
         <FlatButton
           key="close"
           label={<Trans>Close</Trans>}
@@ -277,10 +288,14 @@ export default function DownloadFileSaveAsDialog({
     >
       <ColumnStackLayout noMargin>
         <Text>
-          <Trans>
-            You can download the file of your game to continue working on it
-            using the full GDevelop version:
-          </Trans>
+          {isOhStemMode ? (
+            'Tải xuống dự án và tài nguyên để sao lưu hoặc nhập lại vào OhStem Game Studio.'
+          ) : (
+            <Trans>
+              You can download the file of your game to continue working on it
+              using the full GDevelop version:
+            </Trans>
+          )}
         </Text>
         <Line noMargin expand justifyContent="center">
           {zippedProjectBlob ? (

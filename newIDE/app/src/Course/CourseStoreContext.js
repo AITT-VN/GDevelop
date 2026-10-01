@@ -9,6 +9,7 @@ import {
   type CourseListingData,
 } from '../Utils/GDevelopServices/Shop';
 import { COURSE_CHAPTERS_FETCH_TIMEOUT } from '../Utils/GlobalFetchTimeouts';
+import { isOhStemMode } from '../OhStem/Config';
 
 type CourseChapterStoreState = {|
   listedCourses: CourseListingData[] | null,
@@ -35,6 +36,7 @@ export const CourseStoreStateProvider = (props: Props): React.MixedElement => {
   >(null);
 
   const loadCourses = React.useCallback(async () => {
+    if (isOhStemMode) return;
     try {
       const fetchedListedCourses = await listListedCourses();
       setListedCourses(fetchedListedCourses);
@@ -47,6 +49,7 @@ export const CourseStoreStateProvider = (props: Props): React.MixedElement => {
   }, []);
 
   const loadCourseChapters = React.useCallback(async () => {
+    if (isOhStemMode) return;
     try {
       const fetchedListedCourseChapters = await listListedCourseChapters();
       setListedCourseChapters(fetchedListedCourseChapters);

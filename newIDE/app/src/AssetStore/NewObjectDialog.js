@@ -52,6 +52,7 @@ import uniq from 'lodash/uniq';
 import { useInstallExtension } from './ExtensionStore/InstallExtension';
 import { ExtensionStoreContext } from './ExtensionStore/ExtensionStoreContext';
 import { type ObjectShortHeader } from '../Utils/GDevelopServices/Extension';
+import { isOhStemMode } from '../OhStem/Config';
 
 const gd: libGDevelop = global.gd;
 
@@ -455,7 +456,7 @@ function NewObjectDialog({
     getNewObjectDialogDefaultTab,
   } = React.useContext(PreferencesContext);
   const [currentTab, setCurrentTab] = React.useState(
-    getNewObjectDialogDefaultTab()
+    isOhStemMode ? 'new-object' : getNewObjectDialogDefaultTab()
   );
 
   React.useEffect(() => setNewObjectDialogDefaultTab(currentTab), [
@@ -824,11 +825,13 @@ function NewObjectDialog({
                 value={currentTab}
                 onChange={setCurrentTab}
                 options={[
-                  {
-                    label: <Trans>Asset Store</Trans>,
-                    value: 'asset-store',
-                    id: 'asset-store-tab',
-                  },
+                  ...(!isOhStemMode
+                    ? [{
+                        label: <Trans>Asset Store</Trans>,
+                        value: 'asset-store',
+                        id: 'asset-store-tab',
+                      }]
+                    : []),
                   {
                     label: <Trans>New object from scratch</Trans>,
                     value: 'new-object',

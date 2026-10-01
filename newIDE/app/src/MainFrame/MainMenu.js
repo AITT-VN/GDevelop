@@ -15,6 +15,7 @@ import { getElectronAccelerator } from '../KeyboardShortcuts';
 import { isMacLike } from '../Utils/Platform';
 import Window from '../Utils/Window';
 import optionalRequire from '../Utils/OptionalRequire';
+import { isOhStemMode } from '../OhStem/Config';
 const electron = optionalRequire('electron');
 
 const isDesktop = !!electron;
@@ -124,6 +125,26 @@ export const buildMainMenuDeclarativeTemplate = ({
   isApplicationTopLevelMenu,
   hideAskAi,
 }: BuildMainMenuProps): Array<MenuDeclarativeItemTemplate> => {
+  if (isOhStemMode) {
+    return [
+      {
+        label: i18n._(t`File`),
+        submenu: [
+          { label: i18n._(t`Open...`), onClickSendEvent: 'main-menu-open' },
+          {
+            label: i18n._(t`Save`),
+            onClickSendEvent: 'main-menu-save',
+            enabled: !!project,
+          },
+          {
+            label: i18n._(t`Save as...`),
+            onClickSendEvent: 'main-menu-save-as',
+            enabled: canSaveProjectAs,
+          },
+        ],
+      },
+    ];
+  }
   const fileTemplate: MenuDeclarativeItemTemplate = {
     label: i18n._(t`File`),
     submenu: [

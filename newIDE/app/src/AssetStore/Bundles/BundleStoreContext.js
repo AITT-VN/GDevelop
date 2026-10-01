@@ -18,6 +18,7 @@ import { t } from '@lingui/macro';
 import { sendBundleInformationOpened } from '../../Utils/Analytics/EventSender';
 import { BUNDLES_FETCH_TIMEOUT } from '../../Utils/GlobalFetchTimeouts';
 import AuthenticatedUserContext from '../../Profile/AuthenticatedUserContext';
+import { isOhStemMode } from '../../OhStem/Config';
 
 const getBundleListingDataSearchTerms = (bundle: BundleListingData) =>
   bundle.name + '\n' + bundle.description + '\n' + bundle.categories.join('\n');
@@ -100,6 +101,7 @@ export const BundleStoreStateProvider = ({
 
   const fetchBundles = React.useCallback(
     () => {
+      if (isOhStemMode) return;
       // If the bundles are already loaded, don't load them again.
       if (isLoading.current || bundleListingDatas) return;
 

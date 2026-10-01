@@ -8,6 +8,7 @@ import {
 import CloudStorageProvider from '../CloudStorageProvider';
 import { moveUrlResourcesToCloudFilesIfPrivate } from '../CloudStorageProvider/CloudResourceFetcher';
 import UrlStorageProvider from '../UrlStorageProvider';
+import OhStemStorageProvider from '../OhStemStorageProvider';
 import { fetchRelativeResourcesToFullUrls } from '../UrlStorageProvider/UrlResourceFetcher';
 
 const fetchers: {
@@ -21,6 +22,8 @@ const fetchers: {
   // URL. This allows to open local projects uploaded to GitHub for example.
   // $FlowFixMe[incompatible-type]
   [UrlStorageProvider.internalName]: fetchRelativeResourcesToFullUrls,
+  // OhStem keeps uploaded files in IndexedDB and restores object URLs on open.
+  [OhStemStorageProvider.internalName]: async () => ({ erroredResources: [] }),
 };
 
 const BrowserResourceFetcher: ResourceFetcher = {

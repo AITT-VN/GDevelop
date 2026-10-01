@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OhStem Game Studio — kiểm thử iframe</title>
+    <style>
+      body { margin: 0; font: 14px system-ui, sans-serif; }
+      form { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; background: #e8eef5; }
+      label { display: flex; align-items: center; gap: 5px; }
+      input { min-width: 150px; }
+      iframe { border: 0; width: 100%; height: calc(100vh - 64px); }
+    </style>
+  </head>
+  <body>
+    <form id="controls">
+      <label>Editor <input id="editor" value="http://localhost:3000" /></label>
+      <label>Mã học sinh <input id="learner" value="test-a" /></label>
+      <label>Slot <input id="slot" value="gamedev-l10-main" /></label>
+      <label>Seed <input id="seed" placeholder="URL JSON dự án mốc (tuỳ chọn)" /></label>
+      <label>Template <input id="template" placeholder="URL JSON dự án mẫu (tuỳ chọn)" /></label>
+      <button type="submit">Nạp iframe</button>
+    </form>
+    <iframe id="studio" title="OhStem Game Studio"
+      allow="fullscreen; clipboard-read; clipboard-write; autoplay; camera; microphone; gamepad"></iframe>
+    <script>
+      document.getElementById('controls').addEventListener('submit', event => {
+        event.preventDefault();
+        const value = id => document.getElementById(id).value.trim();
+        const url = new URL(value('editor'));
+        url.searchParams.set('lang', 'vi');
+        url.searchParams.set('learner', value('learner'));
+        if (value('template')) url.searchParams.set('template', value('template'));
+        else if (value('slot')) {
+          url.searchParams.set('slot', value('slot'));
+          if (value('seed')) url.searchParams.set('seed', value('seed'));
+        }
+        document.getElementById('studio').src = url.href;
+      });
+    </script>
+  </body>
+</html>

@@ -19,6 +19,7 @@ import { t } from '@lingui/macro';
 import { sendGameTemplateInformationOpened } from '../../Utils/Analytics/EventSender';
 import { PRIVATE_GAME_TEMPLATES_FETCH_TIMEOUT } from '../../Utils/GlobalFetchTimeouts';
 import AuthenticatedUserContext from '../../Profile/AuthenticatedUserContext';
+import { isOhStemMode } from '../../OhStem/Config';
 
 const defaultSearchText = '';
 const excludedTiers = new Set<string>(); // No tiers for game templates.
@@ -133,6 +134,7 @@ export const PrivateGameTemplateStoreStateProvider = ({
 
   const fetchGameTemplates = React.useCallback(
     () => {
+      if (isOhStemMode) return;
       // If the game templates are already loaded, don't load them again.
       if (isLoading.current || privateGameTemplateListingDatas) return;
 

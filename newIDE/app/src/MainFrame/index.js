@@ -1,6 +1,7 @@
 // @flow
 
 import * as React from 'react';
+import { isOhStemMode } from '../OhStem/Config';
 import { type State } from './MainFrameState';
 import './MainFrame.css';
 import Snackbar from '@material-ui/core/Snackbar';
@@ -5970,9 +5971,10 @@ const MainFrame = (props: Props): React.MixedElement => {
 
   const previewLoading = previewLoadingRef.current;
   const hideAskAi =
-    !!authenticatedUser.limits &&
-    !!authenticatedUser.limits.capabilities.classrooms &&
-    authenticatedUser.limits.capabilities.classrooms.hideAskAi;
+    isOhStemMode ||
+    (!!authenticatedUser.limits &&
+      !!authenticatedUser.limits.capabilities.classrooms &&
+      authenticatedUser.limits.capabilities.classrooms.hideAskAi);
   const showLoaderAfterDelay =
     previewLoading === 'hot-reload-for-in-game-edition';
   const showLoaderImmediately =

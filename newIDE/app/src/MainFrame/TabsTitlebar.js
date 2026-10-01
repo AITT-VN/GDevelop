@@ -21,6 +21,7 @@ import AuthenticatedUserContext from '../Profile/AuthenticatedUserContext';
 import Window from '../Utils/Window';
 import { isMacLike } from '../Utils/Platform';
 import { AiRequestContext } from '../AiGeneration/AiRequestContext';
+import { isOhStemMode } from '../OhStem/Config';
 
 const WINDOW_DRAGGABLE_PART_CLASS_NAME = 'title-bar-draggable-part';
 const WINDOW_NON_DRAGGABLE_PART_CLASS_NAME = 'title-bar-non-draggable-part';
@@ -194,7 +195,10 @@ export default function TabsTitlebar({
     limits.capabilities.classrooms.hideAskAi;
 
   const shouldDisplayAskAi =
-    preferences.values.showAiAskButtonInTitleBar && displayAskAi && !hideAskAi;
+    !isOhStemMode &&
+    preferences.values.showAiAskButtonInTitleBar &&
+    displayAskAi &&
+    !hideAskAi;
   const isAskAiIconAnimated = useIsAskAiIconAnimated(shouldDisplayAskAi);
 
   const [isGlowing, setIsGlowing] = React.useState(false);
