@@ -22,6 +22,12 @@ must use opaque learner keys and avoid sharing browser profiles if this
 provisional storage option is used. Server persistence requires an authenticated
 LMS storage API.
 
+Lessons open workshops as `?slot=<lesson-id>&seed=<sample URL>` so a reload
+keeps the learner's work. When both `slot` and `seed` are present, **File →
+Làm lại từ bản mẫu** downloads and checks the seed before replacing that learner’s slot in one
+transaction (after confirmation), then reloads the page. A failed download or
+write keeps the saved work and shows an error.
+
 Not yet implemented: OhStem link publishing, LMS/S3 project sync, curriculum
 templates/assets, and school-computer performance validation. The CloudFront
 deployment is available at `https://gdevelop.ohstem.vn/`.
@@ -43,7 +49,12 @@ the editor fetches the current HTML instead of an older cached page.
 Never use the upstream `newIDE/web-app/scripts/deploy.js` for this fork: it
 publishes to upstream destinations. The CloudFront response headers policy uses
 `Content-Security-Policy: frame-ancestors 'self' https://courses.openstem.vn
-http://localhost:*` (also allow the actual local test host origin if different).
+https://lms.ohstem.vn http://localhost:*` (also allow the actual local test host
+origin if different). `frame-ancestors` is checked against **every** ancestor,
+not only the direct parent: in the LMS the chain is `lms.ohstem.vn` →
+`courses.openstem.vn` → this editor, so every LMS origin that embeds the course
+app (`VITE_LMS_ORIGINS` in lms-course-apps) must be listed, or the editor is
+blocked inside the LMS even though it works on `courses.openstem.vn` directly.
 Do not set `X-Frame-Options: DENY` or `SAMEORIGIN`. Test COOP/COEP headers with
 the lesson iframe before enabling either one.
 
@@ -82,3 +93,20 @@ not been completed merely by building the code.
 For the LMS iframe, use `allow="fullscreen; clipboard-read; clipboard-write;
 autoplay; camera; microphone; gamepad"` with no `sandbox`. Keep the iframe
 mounted throughout a lesson. Do not use `step.embedUrl`, which reloads it.
+
+## Phase A acceptance (2026-10-02)
+
+- `node newIDE/app/scripts/test-ohstem-slot-reset.cjs` passes: menu eligibility,
+  cancel, failed HTTP/invalid seed/aborted write preservation, learner and slot
+  isolation, and reopening the replacement.
+- `npm run build:ohstem` passes. `npm run flow -- check --max-workers 2
+  --show-all-errors` reports 33 existing diagnostics. An isolated archive of
+  base `13bc712` reproduces all 33 (plus three missing generated VersionMetadata
+  imports); comparison by source file and diagnostic message finds no new ones.
+  Flow is not a passing gate yet; no suppressions or weakened types were added.
+- Production CSP now includes `https://lms.ohstem.vn`; header verified with HTTP
+  200. Real LMS login/ancestor-chain acceptance and school hardware measurements
+  remain pending. See the course repository's phase A acceptance record.
+- Browser UI verified that learner A's saved title survives reopening and learner
+  B with the same slot on the same browser receives the original seed. These
+  synthetic workspace keys do not substitute for two authenticated LMS accounts.

@@ -16,6 +16,10 @@ import { isMacLike } from '../Utils/Platform';
 import Window from '../Utils/Window';
 import optionalRequire from '../Utils/OptionalRequire';
 import { isOhStemMode } from '../OhStem/Config';
+import {
+  canResetSlotFromSeed,
+  resetSlotFromSeed,
+} from '../ProjectsStorage/OhStemStorageProvider';
 const electron = optionalRequire('electron');
 
 const isDesktop = !!electron;
@@ -82,6 +86,7 @@ export type MainMenuEvent =
   | 'main-menu-open-profile'
   | 'main-menu-open-ask-ai'
   | 'main-menu-select-all'
+  | 'main-menu-ohstem-reset-from-seed'
   | 'update-status';
 
 const getMainMenuEventCallback = (
@@ -109,6 +114,7 @@ const getMainMenuEventCallback = (
     'main-menu-open-profile': callbacks.onOpenProfile,
     'main-menu-open-ask-ai': callbacks.onOpenAskAi,
     'main-menu-select-all': callbacks.onSelectAll,
+    'main-menu-ohstem-reset-from-seed': resetSlotFromSeed,
     'update-status': callbacks.setElectronUpdateStatus,
   };
 
@@ -141,6 +147,15 @@ export const buildMainMenuDeclarativeTemplate = ({
             onClickSendEvent: 'main-menu-save-as',
             enabled: canSaveProjectAs,
           },
+          ...(canResetSlotFromSeed()
+            ? [
+                { type: 'separator' },
+                {
+                  label: 'Làm lại từ bản mẫu',
+                  onClickSendEvent: 'main-menu-ohstem-reset-from-seed',
+                },
+              ]
+            : []),
         ],
       },
     ];

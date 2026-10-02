@@ -64,6 +64,45 @@ const writeStoredProject = async (
   });
 };
 
+const getCurrentSlotWithSeed = (): ?string => {
+  if (typeof window === 'undefined' || !getLearnerId()) return null;
+  const args = new URL(window.location.href).searchParams;
+  const slot = args.get('slot');
+  if (!slot || !isValidSlot(slot) || !args.get('seed') || args.get('template'))
+    return null;
+  return slot;
+};
+
+/** Lessons open `?slot=<lesson>&seed=<sample>`, so a learner can start over. */
+export const canResetSlotFromSeed = (): boolean => !!getCurrentSlotWithSeed();
+
+export const resetSlotFromSeed = async (): Promise<void> => {
+  const slot = getCurrentSlotWithSeed();
+  if (!slot) return;
+  if (
+    !window.confirm(
+      'Xoá bài đang làm trong ô lưu này và mở lại bản mẫu gốc? Không hoàn tác được. Muốn giữ bài, hãy tải bản ZIP trước.'
+    )
+  )
+    return;
+  try {
+    const seed = new URL(window.location.href).searchParams.get('seed');
+    if (!seed) return;
+    // Fetch first: a failed download must never erase the learner's saved work.
+    const project = await fetchProject(seed);
+    if (!project || !project.properties || !Array.isArray(project.layouts))
+      throw new Error('Invalid seed project.');
+    // One transaction replaces only this learner's slot; abort keeps the old record.
+    await writeStoredProject(`slot:${slot}`, { project, assets: {} });
+    window.location.reload();
+  } catch (error) {
+    console.error('Could not restart the OhStem lesson from its seed.', error);
+    window.alert(
+      'Không thể mở lại bản mẫu. Bài đã lưu vẫn được giữ nguyên. Hãy kiểm tra kết nối và thử lại.'
+    );
+  }
+};
+
 const fetchProject = async (url: string): Promise<Object> => {
   const parsedUrl = new URL(url);
   if (!['https:', 'http:'].includes(parsedUrl.protocol))
@@ -111,7 +150,9 @@ const materializeStoredProject = (record: StoredProject): Object => {
   return JSON.parse(json);
 };
 
-const createStoredProject = async (project: gdProject): Promise<StoredProject> => {
+const createStoredProject = async (
+  project: gdProject
+): Promise<StoredProject> => {
   let json = JSON.stringify(serializeToJSObject(project));
   const assets = {};
   const resourceManager = project.getResourcesManager();
@@ -147,8 +188,9 @@ const importZip = async (file: File): Promise<StoredProject> => {
       reject
     );
   });
-  const projectEntry = entries.find(entry =>
-    entry.filename.endsWith('/game.json') || entry.filename === 'game.json'
+  const projectEntry = entries.find(
+    entry =>
+      entry.filename.endsWith('/game.json') || entry.filename === 'game.json'
   );
   if (!projectEntry) throw new Error('ZIP has no game.json.');
   const projectDirectory = projectEntry.filename.slice(0, -'game.json'.length);
@@ -264,7 +306,10 @@ export default ({
         `copy:${crypto.randomUUID()}`;
       const fileMetadata = { fileIdentifier };
       await options.onMoveResources({ newFileMetadata: fileMetadata });
-      await writeStoredProject(fileIdentifier, await createStoredProject(project));
+      await writeStoredProject(
+        fileIdentifier,
+        await createStoredProject(project)
+      );
       return { wasSaved: true, fileMetadata };
     },
   }),
