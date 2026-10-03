@@ -42,15 +42,18 @@ const database = {
     return transaction;
   },
 };
+const indexedDB = {open() { const r = {}; queueMicrotask(() => {r.result = database; r.onsuccess();}); return r; }};
 const window = {
   location: {href: '', reload: () => reloaded++},
   confirm: () => confirmed,
   alert: () => alerted++,
+  indexedDB,
+  crypto: require('node:crypto').webcrypto,
 };
 const moduleExports = {};
 vm.runInNewContext(code, {
   exports: moduleExports, URL, window, global: {gd: {}}, console: {error() {}},
-  indexedDB: {open() { const r = {}; queueMicrotask(() => {r.result = database; r.onsuccess();}); return r; }},
+  indexedDB,
   fetch: async () => { fetched++; return response; },
   require(name) {
     if (name === '@lingui/macro') return {t: s => s[0]};
