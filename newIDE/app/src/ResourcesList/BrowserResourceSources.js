@@ -25,6 +25,7 @@ import {
 } from '../Utils/GDevelopServices/Asset';
 import { DialogPrimaryButton } from '../UI/Dialog';
 import ProjectResourcesChooser from './ProjectResources/ProjectResourcesChooser';
+import { isOhStemMode } from '../OhStem/Config';
 
 const ResourceStoreChooser = ({
   options,
@@ -345,4 +346,8 @@ const browserResourceSources: Array<ResourceSource> = [
   }),
 ];
 
-export default browserResourceSources;
+export default isOhStemMode
+  ? browserResourceSources.filter(
+      source => !source.name.startsWith('resource-store-')
+    )
+  : browserResourceSources;

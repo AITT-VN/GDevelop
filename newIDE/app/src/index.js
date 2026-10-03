@@ -17,6 +17,11 @@ import { loadScript } from './Utils/LoadScript';
 import { showErrorBox } from './UI/Messages/MessageBox';
 import VersionMetadata from './Version/VersionMetadata';
 import { getThemeWindowBackgroundColor } from './UI/Theme';
+import { isOhStemMode } from './OhStem/Config';
+import { installOhStemNetworkGuard } from './OhStem/NetworkGuard';
+
+// Before anything else can issue a request (see OhStem/NetworkGuard.js).
+if (isOhStemMode) installOhStemNetworkGuard(window);
 
 const GD_STARTUP_TIMES = global.GD_STARTUP_TIMES || [];
 

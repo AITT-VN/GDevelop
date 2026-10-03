@@ -40,6 +40,7 @@ import {
   getPrivateAssetPackListingDataFromUserFriendlySlug,
 } from './AssetStoreUtils';
 import useAlertDialog from '../UI/Alert/useAlertDialog';
+import { isOhStemMode } from '../OhStem/Config';
 
 export type AssetFiltersState = {|
   animatedFilter: AnimatedAssetStoreSearchFilter,
@@ -296,6 +297,7 @@ export const AssetStoreStateProvider = ({
 
   const fetchAssetsAndFilters = React.useCallback(
     () => {
+      if (isOhStemMode) return;
       (async () => {
         setError(null);
 

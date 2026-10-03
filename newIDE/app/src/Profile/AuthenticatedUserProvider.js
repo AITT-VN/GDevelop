@@ -67,6 +67,7 @@ import { listNotifications } from '../Utils/GDevelopServices/Notification';
 import LoginWithPurchaseClaimDialog from './LoginWithPurchaseClaimDialog';
 import CreateAccountWithPurchaseClaimDialog from './CreateAccountWithPurchaseClaimDialog';
 import { type ClaimedProductOptions } from './PurchaseClaimDialog';
+import { isOhStemMode } from '../OhStem/Config';
 type Props = {|
   authentication: Authentication,
   preferencesValues: PreferencesValues,
@@ -1141,6 +1142,7 @@ export default class AuthenticatedUserProvider extends React.Component<
   };
 
   _fetchAchievements = async () => {
+    if (isOhStemMode) return;
     // Load achievements only once, as they are the same across all users.
     if (this.state.authenticatedUser.achievements) return;
 

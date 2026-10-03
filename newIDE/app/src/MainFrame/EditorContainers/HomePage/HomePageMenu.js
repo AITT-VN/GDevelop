@@ -21,6 +21,7 @@ import {
 } from '../../../Utils/GDevelopServices/Usage';
 import AuthenticatedUserContext from '../../../Profile/AuthenticatedUserContext';
 import { isNativeMobileApp } from '../../../Utils/Platform';
+import { isOhStemMode } from '../../../OhStem/Config';
 
 export const styles = {
   // Ensure it's always interactive, even when another iframe disable pointer events.
@@ -104,6 +105,7 @@ export const getTabsToDisplay = ({
 }: {|
   limits: ?Limits,
 |}): HomePageMenuTab[] => {
+  if (isOhStemMode) return [homePageMenuTabs.create];
   const displayPlayTab =
     !limits ||
     !(

@@ -8,6 +8,7 @@ import CreditsPackagesDialog from '../../Credits/CreditsPackagesDialog';
 import CreditsUsageDialog from '../../Credits/CreditsUsageDialog';
 import { CREDITS_PACKAGES_FETCH_TIMEOUT } from '../../Utils/GlobalFetchTimeouts';
 import AuthenticatedUserContext from '../../Profile/AuthenticatedUserContext';
+import { isOhStemMode } from '../../OhStem/Config';
 import {
   resolveCreditsPackageDialogDisplay,
   type CreditsPackagePlacementId,
@@ -90,6 +91,7 @@ export const CreditsPackageStoreStateProvider = ({
 
   const fetchCreditsPackages = React.useCallback(
     () => {
+      if (isOhStemMode) return;
       // If the credit packages are already loaded, don't load them again.
       if (isLoading.current || creditsPackageListingDatas) return;
 

@@ -56,6 +56,7 @@ import {
 import { type CreateProjectResult } from '../../../Utils/UseCreateProject';
 import { CreditsPackageStoreContext } from '../../../AssetStore/CreditsPackages/CreditsPackageStoreContext';
 import { type OpenAskAiOptions } from '../../../AiGeneration/Utils';
+import { isOhStemMode } from '../../../OhStem/Config';
 
 const noop = () => {};
 
@@ -342,7 +343,9 @@ export const HomePage: React.ComponentType<Props> = React.memo<Props>(
       const tabRequestedAtOpening = React.useRef<HomeTab | null>(
         getRequestedTab(routeArguments)
       );
-      const initialTab = tabRequestedAtOpening.current
+      const initialTab = isOhStemMode
+        ? 'create'
+        : tabRequestedAtOpening.current
         ? tabRequestedAtOpening.current
         : showCreateSectionByDefault
         ? 'create'
@@ -615,7 +618,15 @@ export const HomePage: React.ComponentType<Props> = React.memo<Props>(
             <TeamProvider>
               <div style={isMobile ? styles.mobileContainer : styles.container}>
                 <div style={styles.scrollableContainer}>
-                  {activeTab === 'create' && (
+                  {isOhStemMode && activeTab === 'create' ? (
+                    <div style={{ padding: 32, fontFamily: 'sans-serif' }}>
+                      <h1>OhStem Game Studio</h1>
+                      <p>Mở dự án từ bài học hoặc nhập tệp ZIP đã tải về.</p>
+                      <button type="button" onClick={onChooseProject}>
+                        Mở tệp ZIP
+                      </button>
+                    </div>
+                  ) : activeTab === 'create' && (
                     <CreateSection
                       project={project}
                       currentFileMetadata={fileMetadata}

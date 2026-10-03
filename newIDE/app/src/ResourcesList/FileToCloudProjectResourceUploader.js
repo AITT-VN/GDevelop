@@ -21,6 +21,7 @@ import LinearProgress from '../UI/LinearProgress';
 import Paper from '../UI/Paper';
 import GDevelopThemeContext from '../UI/Theme/GDevelopThemeContext';
 import RaisedButton from '../UI/RaisedButton';
+import { isOhStemMode } from '../OhStem/Config';
 
 type FileToCloudProjectResourceUploaderProps = {|
   options: ChooseResourceOptions,
@@ -136,12 +137,27 @@ export const FileToCloudProjectResourceUploader = ({
     async () => {
       const input = inputRef.current;
       if (!input) return;
-      if (!cloudProjectId) return;
+      if (!cloudProjectId && !isOhStemMode) return;
 
       try {
         setIsUploading(true);
         setError(null);
         setUploadProgress(0);
+        if (isOhStemMode && storageProvider.internalName === 'OhStem') {
+          onChooseResources(
+            selectedFiles.map(file => {
+              const url = URL.createObjectURL(file);
+              const resource = createNewResource();
+              resource.setFile(url);
+              resource.setName(file.name);
+              resource.setOrigin('url', url);
+              return resource;
+            })
+          );
+          setSelectedFiles([]);
+          input.value = '';
+          return;
+        }
         const results: UploadedProjectResourceFiles = await uploadProjectResourceFiles(
           authenticatedUser,
           cloudProjectId,
@@ -178,6 +194,7 @@ export const FileToCloudProjectResourceUploader = ({
       onChooseResources,
       createNewResource,
       cloudProjectId,
+      storageProvider,
     ]
   );
 
@@ -194,8 +211,9 @@ export const FileToCloudProjectResourceUploader = ({
     .filter(Boolean);
 
   const canUploadWithThisStorageProvider =
-    storageProvider.internalName === 'Cloud' && !!fileMetadata;
-  const isConnected = !!authenticatedUser.authenticated;
+    (storageProvider.internalName === 'Cloud' && !!fileMetadata) ||
+    (isOhStemMode && storageProvider.internalName === 'OhStem');
+  const isConnected = isOhStemMode || !!authenticatedUser.authenticated;
   const canChooseFiles =
     !isUploading && isConnected && canUploadWithThisStorageProvider;
 

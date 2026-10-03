@@ -1,6 +1,7 @@
 // @flow
 import Window from '../Utils/Window';
 import { getIDEVersionWithHash } from '../Version';
+import { isOhStemMode } from '../OhStem/Config';
 
 type FileSet =
   | 'preview'
@@ -49,7 +50,11 @@ export const findGDJS = (
   // run `newIDE/web-app/scripts/deploy-GDJS-Runtime` script.
   let gdjsRoot = `https://resources.gdevelop-app.com/GDJS-${getIDEVersionWithHash()}`;
 
-  if (Window.isDev()) {
+  if (isOhStemMode) {
+    gdjsRoot = `${window.location.origin}/GDJS`;
+  }
+
+  if (Window.isDev() && !isOhStemMode) {
     gdjsRoot =
       window.location.hostname === 'localhost'
         ? // Served by `watch-serve-GDJS-runtime.js` when running the IDE locally.

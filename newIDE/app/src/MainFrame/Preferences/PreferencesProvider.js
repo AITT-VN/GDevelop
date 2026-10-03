@@ -30,6 +30,7 @@ import {
   selectLanguageOrLocale,
 } from '../../Utils/Language';
 import { type GamesDashboardOrderBy } from '../../GameDashboard/GamesList';
+import { isOhStemMode, getLearnerId } from '../../OhStem/Config';
 import {
   CHECK_APP_UPDATES_TIMEOUT,
   PERIODIC_APP_UPDATES_TIMEOUT,
@@ -44,11 +45,12 @@ type Props = {|
 
 type State = Preferences;
 
-const localStorageItem = 'gd-preferences';
+const getLocalStorageItem = () =>
+  isOhStemMode ? `gd-preferences:ohstem:${getLearnerId() || 'unknown'}` : 'gd-preferences';
 
 export const loadPreferencesFromLocalStorage = (): ?PreferencesValues => {
   try {
-    const persistedState = localStorage.getItem(localStorageItem);
+    const persistedState = localStorage.getItem(getLocalStorageItem());
     if (!persistedState) return null;
 
     const values = JSON.parse(persistedState);
@@ -154,12 +156,22 @@ export const getInitialPreferences = (): {
       languageOrLocale
     );
 
-  return { ...initialPreferences.values, language: languageOrLocale };
+  return {
+    ...initialPreferences.values,
+    language: isOhStemMode ? 'vi_VN' : languageOrLocale,
+    newProjectsDefaultStorageProviderName: isOhStemMode
+      ? 'OhStem'
+      : initialPreferences.values.newProjectsDefaultStorageProviderName,
+  };
 };
 
 const getPreferences = (): PreferencesValues => {
   const preferences =
     loadPreferencesFromLocalStorage() || getInitialPreferences();
+  if (isOhStemMode) {
+    preferences.language = 'vi_VN';
+    preferences.newProjectsDefaultStorageProviderName = 'OhStem';
+  }
   setLanguageInDOM(preferences.language);
   // $FlowFixMe[incompatible-type]
   return preferences;
@@ -972,7 +984,7 @@ export default class PreferencesProvider extends React.Component<Props, State> {
   _persistValuesToLocalStorage(preferences: Preferences): any {
     try {
       localStorage.setItem(
-        localStorageItem,
+        getLocalStorageItem(),
         JSON.stringify(preferences.values)
       );
     } catch (e) {

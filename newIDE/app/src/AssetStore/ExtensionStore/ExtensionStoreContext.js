@@ -14,6 +14,7 @@ import {
 } from '../../UI/Search/UseSearchStructuredItem';
 import PreferencesContext from '../../MainFrame/Preferences/PreferencesContext';
 import { EXTENSIONS_FETCH_TIMEOUT } from '../../Utils/GlobalFetchTimeouts';
+import { isOhStemMode } from '../../OhStem/Config';
 
 const emptySearchText = '';
 
@@ -95,6 +96,7 @@ export const ExtensionStoreStateProvider = ({
 
   const fetchExtensionsAndFilters = React.useCallback(
     () => {
+      if (isOhStemMode) return;
       // Don't attempt to load again resources and filters if they
       // are loading or were loaded already in the current language.
       if (
@@ -160,6 +162,7 @@ export const ExtensionStoreStateProvider = ({
 
   React.useEffect(
     () => {
+      if (isOhStemMode) return;
       // Don't attempt to load again extensions and filters if they
       // were loaded already.
       if (

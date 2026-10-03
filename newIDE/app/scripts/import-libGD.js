@@ -152,6 +152,16 @@ if (shell.test('-f', path.join(sourceDirectory, 'libGD.js'))) {
     }
   };
 
+  if (process.env.REACT_APP_OHSTEM_MODE === 'true') {
+    // Keep the native editor library in sync with the pinned upstream tag.
+    // A build must fail if the exact upstream artifact is unavailable.
+    downloadLibGdJs(
+      'https://s3.amazonaws.com/gdevelop-gdevelop.js/master/commit/00b0041478eb4a69473ae9a4875400a2aa97de42'
+    ).then(onLibGdJsDownloaded, () => {
+      shell.echo('❌ Cannot download the pinned libGD.js artifact.');
+      shell.exit(1);
+    });
+  } else {
   const branch = getBranchFromGitRef('HEAD');
 
   // Try to download the latest libGD.js, fallback to previous or master ones
@@ -197,4 +207,5 @@ if (shell.test('-f', path.join(sourceDirectory, 'libGD.js'))) {
       )
     );
   });
+  }
 }

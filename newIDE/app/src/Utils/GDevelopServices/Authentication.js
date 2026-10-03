@@ -18,6 +18,7 @@ import { showErrorBox } from '../../UI/Messages/MessageBox';
 import { type CommunityLinks, type UserSurvey } from './User';
 import { userCancellationErrorName } from '../../LoginProvider/Utils';
 import { ensureIsObject, ensureObjectHasProperty } from '../DataValidator';
+import { isOhStemMode } from '../../OhStem/Config';
 
 export type Profile = {|
   id: string,
@@ -130,6 +131,13 @@ export default class Authentication {
   _initialAuthCheckPromise: Promise<void>;
 
   constructor() {
+    if (isOhStemMode) {
+      // The LMS identifies the learner. Do not initialise GDevelop's Firebase
+      // client, which would contact the upstream authentication service.
+      this.auth = ({ currentUser: null }: any);
+      this._initialAuthCheckPromise = Promise.resolve();
+      return;
+    }
     const app = initializeApp(GDevelopFirebaseConfig);
     this.auth = getAuth(app);
 

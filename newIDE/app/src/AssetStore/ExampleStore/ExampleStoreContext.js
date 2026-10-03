@@ -11,6 +11,7 @@ import {
   type SearchResult,
 } from '../../UI/Search/UseSearchStructuredItem';
 import { EXAMPLES_FETCH_TIMEOUT } from '../../Utils/GlobalFetchTimeouts';
+import { isOhStemMode } from '../../OhStem/Config';
 
 const defaultSearchText = '';
 const excludedTiers = new Set<string>(); // No tiers for examples.
@@ -119,6 +120,7 @@ export const ExampleStoreStateProvider = ({
 
   React.useEffect(
     () => {
+      if (isOhStemMode) return;
       // Don't attempt to load again examples and filters if they
       // were loaded already.
       if (exampleShortHeadersById || isLoading.current) return;

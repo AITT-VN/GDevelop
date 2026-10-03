@@ -4,6 +4,7 @@ const shell = require('shelljs');
 const workboxBuild = require('workbox-build');
 const buildPath = '../public';
 const VersionMetadata = require('../src/Version/VersionMetadata');
+const isOhStemMode = process.env.REACT_APP_OHSTEM_MODE === 'true';
 
 /**
  * Remove files created by create-react-app default service worker.
@@ -88,6 +89,19 @@ const buildSW = () => {
       maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
     })
     .then(({ count, size, warnings }) => {
+      if (
+        !replaceInFile(
+          '../public/service-worker.js',
+          'const isOhStemMode = false;',
+          `const isOhStemMode = ${isOhStemMode};`
+        )
+      ) {
+        console.error(
+          'Error while trying to set OhStem mode in public/service-worker.js.'
+        );
+        shell.exit(1);
+      }
+
       if (
         !replaceInFile(
           '../public/service-worker.js',

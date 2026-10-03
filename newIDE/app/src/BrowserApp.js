@@ -3,6 +3,8 @@ import * as React from 'react';
 import MainFrame from './MainFrame';
 import Window from './Utils/Window';
 import ShareDialog from './ExportAndShare/ShareDialog';
+import Dialog from './UI/Dialog';
+import FlatButton from './UI/FlatButton';
 import Authentication from './Utils/GDevelopServices/Authentication';
 import './UI/icomoon-font.css'; // Styles for Icomoon font.
 
@@ -26,6 +28,8 @@ import ProjectStorageProviders from './ProjectsStorage/ProjectStorageProviders';
 import UrlStorageProvider from './ProjectsStorage/UrlStorageProvider';
 import DownloadFileStorageProvider from './ProjectsStorage/DownloadFileStorageProvider';
 import CloudStorageProvider from './ProjectsStorage/CloudStorageProvider';
+import OhStemStorageProvider from './ProjectsStorage/OhStemStorageProvider';
+import { isOhStemMode, getLearnerId } from './OhStem/Config';
 import BrowserResourceMover from './ProjectsStorage/ResourceMover/BrowserResourceMover';
 import BrowserResourceFetcher from './ProjectsStorage/ResourceFetcher/BrowserResourceFetcher';
 import BrowserEventsFunctionsExtensionOpener from './EventsFunctionsExtensionsLoader/Storage/BrowserEventsFunctionsExtensionOpener';
@@ -35,6 +39,14 @@ import { isServiceWorkerSupported } from './ServiceWorkerSetup';
 import { ensureBrowserSWPreviewSession } from './ExportAndShare/BrowserExporters/BrowserSWPreviewLauncher/BrowserSWPreviewIndexedDB';
 
 export const create = (authentication: Authentication): React.Node => {
+  if (isOhStemMode && !getLearnerId()) {
+    return (
+      <div style={{ padding: 24, fontFamily: 'sans-serif' }}>
+        Mã học viên trong tham số URL <code>learner=</code> không hợp lệ. Chỉ
+        dùng chữ, số, dấu gạch dưới hoặc dấu gạch ngang.
+      </div>
+    );
+  }
   Window.setUpContextMenu();
   const loginProvider = new BrowserLoginProvider(authentication.auth);
   authentication.setLoginProvider(loginProvider);
@@ -46,6 +58,14 @@ export const create = (authentication: Authentication): React.Node => {
   // (and log this into Posthog).
   const canUseBrowserSW = isServiceWorkerSupported();
   if (canUseBrowserSW) ensureBrowserSWPreviewSession();
+  if (isOhStemMode && !canUseBrowserSW) {
+    return (
+      <div style={{ padding: 24, fontFamily: 'sans-serif' }}>
+        Trình duyệt này chưa hỗ trợ Service Worker cần cho phần xem thử
+        của OhStem Game Studio.
+      </div>
+    );
+  }
 
   app = (
     <Providers
@@ -66,12 +86,18 @@ export const create = (authentication: Authentication): React.Node => {
       {({ i18n }) => (
         <ProjectStorageProviders
           appArguments={appArguments}
-          storageProviders={[
-            UrlStorageProvider,
-            CloudStorageProvider,
-            DownloadFileStorageProvider,
-          ]}
-          defaultStorageProvider={UrlStorageProvider}
+          storageProviders={
+            isOhStemMode
+              ? [OhStemStorageProvider, DownloadFileStorageProvider]
+              : [
+                  UrlStorageProvider,
+                  CloudStorageProvider,
+                  DownloadFileStorageProvider,
+                ]
+          }
+          defaultStorageProvider={
+            isOhStemMode ? OhStemStorageProvider : UrlStorageProvider
+          }
         >
           {({
             getStorageProviderOperations,
@@ -92,7 +118,24 @@ export const create = (authentication: Authentication): React.Node => {
                   <BrowserS3PreviewLauncher {...props} ref={ref} />
                 )
               }
-              renderShareDialog={props => (
+              renderShareDialog={props =>
+                isOhStemMode ? (
+                  <Dialog
+                    title="Xuất bản trò chơi"
+                    open
+                    onRequestClose={props.onClose}
+                    actions={[
+                      <FlatButton
+                        key="close"
+                        label="Đóng"
+                        onClick={props.onClose}
+                      />,
+                    ]}
+                  >
+                    Xuất bản thành link OhStem đang được triển khai. Để lưu một
+                    bản ZIP dự án, chọn Tệp → Lưu thành → Tải bản sao.
+                  </Dialog>
+                ) : (
                 <ShareDialog
                   project={props.project}
                   onSaveProject={props.onSaveProject}
@@ -108,7 +151,8 @@ export const create = (authentication: Authentication): React.Node => {
                   initialTab={props.initialTab}
                   gamesList={props.gamesList}
                 />
-              )}
+                )
+              }
               quickPublishOnlineWebExporter={browserOnlineWebExporter}
               storageProviders={storageProviders}
               resourceMover={BrowserResourceMover}

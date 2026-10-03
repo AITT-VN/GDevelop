@@ -8,6 +8,8 @@ console.log('[ServiceWorker] Service worker file executed');
 
 const swURL = new URL(self.location.href);
 const isDev = swURL.searchParams.has('dev');
+// Replaced by make-service-worker.js for the OhStem browser build.
+const isOhStemMode = false;
 
 // If updated, also update the BrowserSWIndexedDB module.
 const DB_NAME = 'gdevelop-browser-sw-preview';
@@ -283,9 +285,13 @@ if (workbox) {
   workbox.precaching.precacheAndRoute([]);
 
   /* custom cache rules*/
-  workbox.routing.registerNavigationRoute('/index.html', {
-    blacklist: [/^\/_/, /\/[^\/]+\.[^\/]+$/, /^\/browser_sw_preview\//],
-  });
+  // The OhStem editor is deployed frequently. Fetch its HTML on every
+  // navigation so an older service worker cannot keep showing an old build.
+  if (!isOhStemMode) {
+    workbox.routing.registerNavigationRoute('/index.html', {
+      blacklist: [/^\/_/, /\/[^\/]+\.[^\/]+$/, /^\/browser_sw_preview\//],
+    });
+  }
 
   // Cache resources from GDevelop cloudfront server (CORS enabled).
   workbox.routing.registerRoute(

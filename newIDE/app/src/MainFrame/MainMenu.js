@@ -15,6 +15,11 @@ import { getElectronAccelerator } from '../KeyboardShortcuts';
 import { isMacLike } from '../Utils/Platform';
 import Window from '../Utils/Window';
 import optionalRequire from '../Utils/OptionalRequire';
+import { isOhStemMode } from '../OhStem/Config';
+import {
+  canResetSlotFromSeed,
+  resetSlotFromSeed,
+} from '../ProjectsStorage/OhStemStorageProvider';
 const electron = optionalRequire('electron');
 
 const isDesktop = !!electron;
@@ -81,6 +86,7 @@ export type MainMenuEvent =
   | 'main-menu-open-profile'
   | 'main-menu-open-ask-ai'
   | 'main-menu-select-all'
+  | 'main-menu-ohstem-reset-from-seed'
   | 'update-status';
 
 const getMainMenuEventCallback = (
@@ -108,6 +114,7 @@ const getMainMenuEventCallback = (
     'main-menu-open-profile': callbacks.onOpenProfile,
     'main-menu-open-ask-ai': callbacks.onOpenAskAi,
     'main-menu-select-all': callbacks.onSelectAll,
+    'main-menu-ohstem-reset-from-seed': resetSlotFromSeed,
     'update-status': callbacks.setElectronUpdateStatus,
   };
 
@@ -124,6 +131,35 @@ export const buildMainMenuDeclarativeTemplate = ({
   isApplicationTopLevelMenu,
   hideAskAi,
 }: BuildMainMenuProps): Array<MenuDeclarativeItemTemplate> => {
+  if (isOhStemMode) {
+    return [
+      {
+        label: i18n._(t`File`),
+        submenu: [
+          { label: i18n._(t`Open...`), onClickSendEvent: 'main-menu-open' },
+          {
+            label: i18n._(t`Save`),
+            onClickSendEvent: 'main-menu-save',
+            enabled: !!project,
+          },
+          {
+            label: i18n._(t`Save as...`),
+            onClickSendEvent: 'main-menu-save-as',
+            enabled: canSaveProjectAs,
+          },
+          ...(canResetSlotFromSeed()
+            ? [
+                { type: 'separator' },
+                {
+                  label: 'Làm lại từ bản mẫu',
+                  onClickSendEvent: 'main-menu-ohstem-reset-from-seed',
+                },
+              ]
+            : []),
+        ],
+      },
+    ];
+  }
   const fileTemplate: MenuDeclarativeItemTemplate = {
     label: i18n._(t`File`),
     submenu: [

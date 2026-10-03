@@ -5,6 +5,7 @@ import {
   listMarketingPlans,
 } from '../Utils/GDevelopServices/Game';
 import { MARKETING_PLANS_FETCH_TIMEOUT } from '../Utils/GlobalFetchTimeouts';
+import { isOhStemMode } from '../OhStem/Config';
 
 type MarketingPlansStoreState = {|
   fetchMarketingPlans: () => void,
@@ -37,6 +38,7 @@ export const MarketingPlansStoreStateProvider = ({
 
   const fetchMarketingPlans = React.useCallback(
     () => {
+      if (isOhStemMode) return;
       // If the marketing plans are already loaded, don't load them again.
       if (isLoading.current || marketingPlans) return;
 

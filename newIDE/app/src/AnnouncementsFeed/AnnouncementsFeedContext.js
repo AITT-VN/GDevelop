@@ -1,5 +1,6 @@
 // @flow
 import * as React from 'react';
+import { isOhStemMode } from '../OhStem/Config';
 import {
   type Announcement,
   type Promotion,
@@ -45,6 +46,7 @@ export const AnnouncementsFeedStateProvider = ({
   const isLoading = React.useRef<boolean>(false);
 
   const fetchAnnouncementsAndPromotions = React.useCallback(async () => {
+    if (isOhStemMode) return;
     if (isLoading.current) return;
 
     setError(null);

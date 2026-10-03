@@ -16,6 +16,7 @@ import {
 import Computer from '../UI/CustomSvgIcons/Computer';
 import { isNativeMobileApp } from '../Utils/Platform';
 import optionalRequire from '../Utils/OptionalRequire';
+import { isOhStemMode } from '../OhStem/Config';
 const electron = optionalRequire('electron');
 
 type Props = {|
@@ -80,7 +81,7 @@ const SaveToStorageProviderDialog = ({
                 )}
             </React.Fragment>
           ))}
-        {!electron && !isNativeMobileApp() && (
+        {!isOhStemMode && !electron && !isNativeMobileApp() && (
           <StorageProviderListItem
             onChooseProvider={onChooseProvider}
             storageProvider={fakeLocalFileStorageProvider}
