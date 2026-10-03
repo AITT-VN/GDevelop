@@ -28,7 +28,7 @@ Làm lại từ bản mẫu** downloads and checks the seed before replacing tha
 transaction (after confirmation), then reloads the page. A failed download or
 write keeps the saved work and shows an error.
 
-Not yet implemented: OhStem link publishing, LMS/S3 project sync, curriculum
+Not yet implemented: OhStem link publishing, LMS/S3 project sync (ZIP import into a lesson slot exists, see below), curriculum
 templates/assets, and school-computer performance validation. The CloudFront
 deployment is available at `https://gdevelop.ohstem.vn/`.
 
@@ -110,3 +110,27 @@ mounted throughout a lesson. Do not use `step.embedUrl`, which reloads it.
 - Browser UI verified that learner A's saved title survives reopening and learner
   B with the same slot on the same browser receives the original seed. These
   synthetic workspace keys do not substitute for two authenticated LMS accounts.
+
+## Network guard, ZIP import into a lesson, save performance (2026-10-03)
+
+- **No requests to GDevelop services.** `src/OhStem/NetworkGuard.js`, installed first thing
+  in `src/index.js` when `REACT_APP_OHSTEM_MODE=true`, refuses `fetch`, `XMLHttpRequest` and
+  `sendBeacon` calls to `api(-dev).gdevelop.io`, `public-resources.gdevelop.io` and
+  `api|analytics.gdevelop-app.com` before they are sent. Callers get the same network error
+  they already got from CORS, so screens that fetch store, recommendations, tutorials, AI
+  settings or licenses simply stay empty. Asset URLs on `resources.gdevelop-app.com` and the
+  editor's own origin are not affected. Test: `node scripts/test-ohstem-network-guard.cjs`.
+- **Open ZIP inside a lesson.** With `?slot=` in the URL, **Tệp tin → Mở…** asks whether the
+  ZIP should replace the work saved in that lesson slot (so reopening the lesson, e.g. the
+  first project lesson of the next course, opens the imported project). Cancel keeps the old
+  behavior: the ZIP opens as a separate copy. Without a slot, or with `template=`, it is
+  always a copy.
+- **Saving.** Assets of the opened project are reused by their blob URL instead of being
+  downloaded again on every save; new resources are downloaded once and stored under the
+  SHA-256 of their content, so ids are stable between saves. Blob URLs of the previous
+  project are revoked when another one is opened. Saving asks for persistent storage
+  (`navigator.storage.persist()`) and a full browser storage produces a Vietnamese message;
+  the saved record is left untouched. Test: `node scripts/test-ohstem-storage.cjs` (also
+  covers the ZIP import rules).
+- Flow: `src/ProjectsStorage/OhStemStorageProvider/index.js` now reads `indexedDB` and
+  `crypto` through `window`; fork-introduced diagnostics in that file went from 23 to 15.

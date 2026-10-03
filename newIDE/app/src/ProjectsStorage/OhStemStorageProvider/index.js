@@ -20,7 +20,7 @@ let databasePromise: ?Promise<IDBDatabase> = null;
 const openDatabase = (): Promise<IDBDatabase> => {
   if (databasePromise) return databasePromise;
   databasePromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = window.indexedDB.open(DB_NAME, 1);
     request.onupgradeneeded = () => {
       request.result.createObjectStore(STORE_NAME);
     };
@@ -71,6 +71,39 @@ const getCurrentSlotWithSeed = (): ?string => {
   if (!slot || !isValidSlot(slot) || !args.get('seed') || args.get('template'))
     return null;
   return slot;
+};
+
+const getCurrentSlot = (): ?string => {
+  if (typeof window === 'undefined' || !getLearnerId()) return null;
+  const args = new URL(window.location.href).searchParams;
+  const slot = args.get('slot');
+  if (!slot || !isValidSlot(slot) || args.get('template')) return null;
+  return slot;
+};
+
+/**
+ * Store an imported ZIP. Inside a lesson slot the learner may replace that slot's
+ * work (so reopening the lesson opens the imported project: next course's first
+ * project lesson, another computer); otherwise, or on cancel, it becomes a copy.
+ */
+export const storeImportedProject = async (
+  imported: StoredProject,
+  name: string
+): Promise<{| fileIdentifier: string, name: string |}> => {
+  const slot = getCurrentSlot();
+  if (
+    slot &&
+    window.confirm(
+      'Dùng tệp ZIP này làm bài trong ô lưu của bài học hiện tại? Bài đang lưu trong ô này sẽ bị thay và không hoàn tác được. Bấm Huỷ để mở ZIP thành một bản sao riêng, không gắn với bài học.'
+    )
+  ) {
+    const fileIdentifier = `slot:${slot}`;
+    await writeStoredProject(fileIdentifier, imported);
+    return { fileIdentifier, name };
+  }
+  const fileIdentifier = `copy:${window.crypto.randomUUID()}`;
+  await writeStoredProject(fileIdentifier, imported);
+  return { fileIdentifier, name };
 };
 
 /** Lessons open `?slot=<lesson>&seed=<sample>`, so a learner can start over. */
@@ -141,39 +174,93 @@ const blankProject = (): Object => {
   }
 };
 
+// Resources of the open project, by URL: blob URLs created when opening it, and
+// remote/data URLs already downloaded once. Saving reuses these Blobs instead of
+// downloading every resource again, and keeps asset ids stable between saves.
+type KnownAsset = {| assetId: string, blob: Blob |};
+let knownAssets: Map<string, KnownAsset> = new Map<string, KnownAsset>();
+
+const forgetOpenedAssets = () => {
+  knownAssets.forEach((_, url) => {
+    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+  });
+  knownAssets = new Map<string, KnownAsset>();
+};
+
+/** Asset id from the content, so the same file keeps the same id in every save. */
+const contentAssetId = async (blob: Blob): Promise<string> => {
+  const subtle = window.crypto && window.crypto.subtle;
+  const anyBlob: any = blob;
+  if (!subtle || typeof anyBlob.arrayBuffer !== 'function')
+    return window.crypto.randomUUID();
+  const digest = await subtle.digest('SHA-256', await anyBlob.arrayBuffer());
+  return Array.from(new Uint8Array(digest))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
+};
+
 const materializeStoredProject = (record: StoredProject): Object => {
+  // A newly opened project replaces the previous one: free its blob URLs.
+  forgetOpenedAssets();
   let json = JSON.stringify(record.project);
   Object.keys(record.assets).forEach(assetId => {
-    const url = URL.createObjectURL(record.assets[assetId]);
+    const blob = record.assets[assetId];
+    const url = URL.createObjectURL(blob);
+    knownAssets.set(url, { assetId, blob });
     json = json.split(`${ASSET_PREFIX}${assetId}`).join(url);
   });
   return JSON.parse(json);
 };
 
-const createStoredProject = async (
+export const createStoredProject = async (
   project: gdProject
 ): Promise<StoredProject> => {
   let json = JSON.stringify(serializeToJSObject(project));
-  const assets = {};
+  const assets: { [string]: Blob } = {};
   const resourceManager = project.getResourcesManager();
   const resourceNames = resourceManager.getAllResourceNames().toJSArray();
-  const urlToAssetId = new Map();
 
   for (const resourceName of resourceNames) {
     const file = resourceManager.getResource(resourceName).getFile();
     if (!/^(blob:|data:|https?:)/.test(file)) continue;
-    let assetId = urlToAssetId.get(file);
-    if (!assetId) {
+    let known: ?KnownAsset = knownAssets.get(file);
+    if (!known) {
       const response = await fetch(file);
       if (!response.ok)
         throw new Error(`Cannot save the resource ${resourceName}.`);
-      assetId = crypto.randomUUID();
-      assets[assetId] = await response.blob();
-      urlToAssetId.set(file, assetId);
+      const blob = await response.blob();
+      known = { assetId: await contentAssetId(blob), blob };
+      knownAssets.set(file, known);
     }
-    json = json.split(file).join(`${ASSET_PREFIX}${assetId}`);
+    assets[known.assetId] = known.blob;
+    json = json.split(file).join(`${ASSET_PREFIX}${known.assetId}`);
   }
   return { project: JSON.parse(json), assets };
+};
+
+const isQuotaError = (error: any): boolean =>
+  !!error &&
+  (error.name === 'QuotaExceededError' ||
+    (!!error.inner && error.inner.name === 'QuotaExceededError'));
+
+/** Write a learner's project, asking the browser to keep the data and explaining a full disk. */
+export const saveStoredProject = async (
+  fileIdentifier: string,
+  record: StoredProject
+): Promise<void> => {
+  try {
+    const storage: any =
+      typeof navigator !== 'undefined' ? (navigator: any).storage : null;
+    if (storage && typeof storage.persist === 'function')
+      await storage.persist().catch(() => false);
+    await writeStoredProject(fileIdentifier, record);
+  } catch (error) {
+    if (isQuotaError(error))
+      throw new Error(
+        'Trình duyệt đã hết chỗ lưu bài. Hãy tải bản ZIP của bài này về máy, xoá bớt dữ liệu trang web cũ hoặc nhờ thầy cô giải phóng dung lượng, rồi lưu lại.'
+      );
+    throw error;
+  }
 };
 
 const readZipEntry = (entry: Object, writer: Object): Promise<any> =>
@@ -201,7 +288,7 @@ const importZip = async (file: File): Promise<StoredProject> => {
   const assetNames = new Map();
   for (const entry of entries) {
     if (entry.directory || entry === projectEntry) continue;
-    const assetId = crypto.randomUUID();
+    const assetId = window.crypto.randomUUID();
     assets[assetId] = await readZipEntry(entry, new zip.BlobWriter());
     assetNames.set(entry.filename, `${ASSET_PREFIX}${assetId}`);
     if (projectDirectory && entry.filename.startsWith(projectDirectory)) {
@@ -243,7 +330,7 @@ export default ({
     if (template && slot)
       throw new Error('Use either template or slot, not both.');
     if (template) {
-      return { fileIdentifier: `copy:${crypto.randomUUID()}` };
+      return { fileIdentifier: `copy:${window.crypto.randomUUID()}` };
     }
     if (slot) {
       if (!isValidSlot(slot)) throw new Error('Invalid slot name.');
@@ -252,7 +339,7 @@ export default ({
     return { fileIdentifier: 'slot:default' };
   },
   getProjectLocation: ({ projectName }) => ({
-    fileIdentifier: `copy:${crypto.randomUUID()}`,
+    fileIdentifier: `copy:${window.crypto.randomUUID()}`,
     name: projectName,
   }),
   createOperations: () => ({
@@ -276,12 +363,10 @@ export default ({
     onOpenWithPicker: async () => {
       const file = await pickZipFile();
       if (!file) return null;
-      const fileIdentifier = `copy:${crypto.randomUUID()}`;
-      await writeStoredProject(fileIdentifier, await importZip(file));
-      return { fileIdentifier, name: file.name };
+      return storeImportedProject(await importZip(file), file.name);
     },
     onSaveProject: async (project: gdProject, fileMetadata: FileMetadata) => {
-      await writeStoredProject(
+      await saveStoredProject(
         fileMetadata.fileIdentifier,
         await createStoredProject(project)
       );
@@ -294,7 +379,7 @@ export default ({
       const name = window.prompt('Tên bản sao dự án', project.getName());
       return {
         saveAsLocation: name
-          ? { fileIdentifier: `copy:${crypto.randomUUID()}`, name }
+          ? { fileIdentifier: `copy:${window.crypto.randomUUID()}`, name }
           : null,
         saveAsOptions: null,
       };
@@ -303,10 +388,10 @@ export default ({
       options.onStartSaving();
       const fileIdentifier =
         (saveAsLocation && saveAsLocation.fileIdentifier) ||
-        `copy:${crypto.randomUUID()}`;
+        `copy:${window.crypto.randomUUID()}`;
       const fileMetadata = { fileIdentifier };
       await options.onMoveResources({ newFileMetadata: fileMetadata });
-      await writeStoredProject(
+      await saveStoredProject(
         fileIdentifier,
         await createStoredProject(project)
       );
