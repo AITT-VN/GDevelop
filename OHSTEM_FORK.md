@@ -134,3 +134,16 @@ mounted throughout a lesson. Do not use `step.embedUrl`, which reloads it.
   covers the ZIP import rules).
 - Flow: `src/ProjectsStorage/OhStemStorageProvider/index.js` now reads `indexedDB` and
   `crypto` through `window`; fork-introduced diagnostics in that file went from 23 to 15.
+
+## Deployment 2026-10-03 (`18d9574`)
+
+Build of merge commit `18d9574` (PR #2) deployed to the production bucket with the cache
+rules above (`static/` immutable, other files 1 hour, `index.html` and `service-worker.js`
+no-cache, `.wasm` as `application/wasm`; no deletions, `course-templates/` untouched);
+CloudFront invalidation of `/`, `/index.html`, `/service-worker.js`. Production now serves
+`static/js/main.fafb0b98.js`. Acceptance on production (Chromium driven by Playwright):
+0 requests to GDevelop services for a whole session; second save downloads no resource;
+learner A reopens their saved work, learner B on the same slot gets the seed; restart from
+the seed keeps the work on cancel and restores the seed on confirm; importing a ZIP inside a
+lesson slot replaces that slot after confirmation; Preview opens. Previous entry files were
+kept for rollback (index.html referenced `static/js/main.d6979d25.js`).
